@@ -1,0 +1,443 @@
+---
+title: "Longitudinal Analysis of Antidepressant Prescribing in England (2021-2024)"
+author: "Lichita Indra"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_section: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE}
+library(dplyr)
+library(highcharter)
+library(tidyr)
+library(knitr)
+library(scales)
+
+data = readRDS("Data/STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds")
+```
+<br><br>
+
+### Introduction
+
+This report will describe and analyse antidepressant prescribing, looking at volume (total number of antidepressant prescribed) and cost, both nationally and regionally. This report only looks at prescribing data in England, aggregated monthly from January 2021 to December 2024.
+
+The report is split into three sections, which are: 
+
+-   National and regional antidepressant prescribing summary
+-   Longitudinal antidepressant prescribing trends
+-   Case study on individual drugs on antidepressant prescribing trends
+
+These three sections aim to generate a better understanding of the breakdown and drivers behind antidepressant prescribing trends and costs.
+<br><br>
+
+### National and regional antidepressant prescribing summary
+
+In this section, we will look at the overall trends and costs of antidepressant prescribing at the national and regional levels in England from 2021 to 2024.
+<br><br>
+
+#### Overview of the national total antidepressant prescription and cost per year
+
+During the four years period from 2021-2024, the total number of antidepressants prescribed in England increased from 82.3 million to 91.7 million. From the chart below, we can see that there was an upward trend in the total number of prescribed antidepressants every year. In 2024, there was around 11.4% more antidepressant being prescribed compared to 2021.
+<br><br>
+
+```{r column1, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(YEAR) %>% 
+  summarise(ITEMS = round(sum(ITEMS), -3)) %>% 
+  ungroup() %>% 
+  hchart("column", hcaes(YEAR, ITEMS)) %>% 
+  hc_title(text = "Annual Number of Antidepressant Prescribed in England (2021-2024)") %>% 
+  hc_xAxis(title = list(text = "Year")) %>% 
+  hc_yAxis(title = list(text = "Items"))
+```
+
+Interestingly, although the number of antidepressants prescribed were increasing, the total annual prescribing cost were decreasing from £285 million in 2021 to £223 million in 2024, representing 24% reduction, as we can see from the chart below. Following this overall significant reduction, the prescribing costs remained constant at £222 million to £227 million in 2022-2024.
+<br><br>
+
+```{r column2, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(YEAR) %>% 
+  summarise(COST = round(sum(COST), -3)) %>% 
+  ungroup() %>% 
+  hchart("column", hcaes(YEAR, COST)) %>% 
+  hc_title(text = "Annual Cost of Antidepressant Prescribed in England (2021-2024)") %>% 
+  hc_xAxis(title = list(text = "Year")) %>% 
+  hc_yAxis(title = list(text = "Total Cost (\u00A3)"))
+```
+
+The contrast between the increasing prescribed antidepressant drugs and its decreasing costs could be due to changes in the drug price or prescribing behaviour, e.g. increase in generic drug prescription. This will be explored further in the report.
+<br><br>
+
+#### Overview of the annual total antidepressant prescription and cost per year by region
+
+In line with the national overview earlier, the annual total antidepressant prescription by region also has an upward or increasing trend. However, the increase in prescribed antidepressant varied quite significantly at the regional level. For instance, the total number of antidepressant prescribed in London increase by more than 17% from 2021 to 2024. On the other hand, it only increased by 7% in the South West region, as opposed to the national increase of 11%.
+
+Although London has the highest percentage increase in antidepressant drugs prescription, the total number of drugs prescribed was the highest in Midlands (15-17 million) and North East & Yorkshire (16-18 million) which has the second and third highest increase of 14.5% and 11.2%, respectively.
+<br><br>
+
+```{r table1, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(YEAR, REGION) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = YEAR, values_from = ITEMS) %>% 
+  mutate(PCT_INC = round(100 * (`2024` - `2021`)/ `2021`, 1)) %>%
+  mutate(across(where(is.numeric), comma)) %>% 
+  rename(
+    Region = REGION,
+    `Percent Change` = PCT_INC
+  ) %>% 
+  kable()
+```
+
+As we have seen at the national level, the costs of antidepressant prescribing were decreasing from 2021 to 2024 by around 24%. At the regional level, however, this decrease varied with an average of around 20% reduction per region. The highest decreasing costs was observed in the North West (25.2%) and North East & Yorkshire (23.9%) regions, and the lowest in London (18.8%). Interestingly, although North East & Yorkshire region has the highest number of antidepressant prescribed in 2021-2024, the highest prescribing costs are observed in the Midlands region instead.
+<br><br>
+
+```{r table2, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(YEAR, REGION) %>% 
+  summarise(COST = sum(COST)) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = YEAR, values_from = COST) %>% 
+  mutate(PCT_INC = round(100 * (`2024` - `2021`)/ `2021`, 1)) %>% 
+  rename(
+    Region = REGION,
+    `Percent Change` = PCT_INC
+  ) %>% 
+  mutate(across(where(is.numeric), comma)) %>% 
+  kable()
+```
+
+#### Comparison between the top 10 most prescribed antidepressants and the top 10 greatest total prescribing cost for antidepressants in 2021-2024
+
+Over the four years period, Sertraline hydrochloride was the most prescribed antidepressant, with almost 90 million drugs prescribed from 2021 to 2024. Of the 32 available antidepressant in England, the top 10 drugs accounted for over 97% of the total antidepressant drugs prescribed, while the top 4 accounted for 73%. Sertraline hydrochloride itself accounted for more than one-fourth (25.65%) of the total prescribed antidepressant during the period, signalling its importance in antidepressant prescribing practices in England.
+<br><br>
+```{r bar1, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(DRUG) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  ungroup() %>% 
+  top_n(10, ITEMS) %>% 
+  arrange(desc(ITEMS)) %>% 
+  hchart("bar", hcaes(DRUG, ITEMS)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_title(text = "Top 10 Antidepressants by Total Prescribed Items in England (2021-2024)") %>% 
+  hc_xAxis(title = list(text = "Drug Name")) %>% 
+  hc_yAxis(title = list(text = "Number of Items Prescribed"))
+```
+
+In terms of the prescribing costs, perhaps it is expected that Sertraline has the highest cost. Sertraline accounts for around 22% of the total prescribing cost, followed by Venlafaxine (16%), Amitriptyline hydrochloride (10%), and Fluoxetine hydrochloride (8.5%). Together, these top four drugs accounted for 56.5% of the total prescribing cost in 2021-2024.
+
+Interestingly, although Amitriptyline was the second most prescribed antidepressant after Sertraline, it has the third highest cost, behind Venlafaxine which was the sixth most prescribed antidepressant. Similarly, Fluoxetine has the fourth highest cost despite being the fifth most prescribed antidepressant.
+
+Furthermore, some drugs that were not among the 10 most prescribed such as Vortioxetine, Trimipramine and Tranylcypromine are among the top drugs by prescribing costs. This indicates that some drugs are far more expensive than others, leading to discrepancies in the total prescribed drugs and prescribing costs.
+<br><br>
+
+```{r bar2, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(DRUG) %>% 
+  summarise(COST = round(sum(COST))) %>% 
+  ungroup() %>% 
+  top_n(10, COST) %>% 
+  arrange(desc(COST)) %>% 
+  hchart("bar", hcaes(DRUG, COST)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_title(text = "Top 10 Antidepressants by Total Prescribing Cost in England (2021-2024)") %>% 
+  hc_xAxis(title = list(text = "Drug Name")) %>% 
+  hc_yAxis(title = list(text = "Total Cost (\u00A3)"))
+```
+
+### Longitudinal antidepressant prescribing trends and costs
+
+After looking at the annual trends and costs of antidepressant prescribing at the national and regional levels, we will now look at the monthly trends to further understand the changes that has driven the trends that we observed.
+<br><br>
+
+#### Monthly trends of antidepressant prescribing in England (2021-2024)
+
+Across the four years period, the total number of antidepressant drugs prescribed every month were fluctuating although remained stable around 6-8 million. However, from this chart below, we can clearly see the upward trend over the months which culminated into over 17% increase in prescribed antidepressant from January 2021 (6.7 million) to December 2024 (7.8 million).
+<br><br>
+```{r line1, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(YM) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  ungroup() %>% 
+hchart("line", hcaes(YM, ITEMS)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Items Prescribed")) %>% 
+  hc_title(text = "Monthly Total Antidepressant Prescribed in England from January 2021 to December 2024")
+```
+
+From the previous section, we learned that the top four most prescribed antidepressant drugs accounted for over 70% of the total prescribed antidepressant in the four years period. However, looking at the monthly chart below, we can clearly see that the increase in the number of prescribed antidepressant was mostly driven by Sertraline prescription. The number of Sertraline prescribed increased by around 29% from January 2021 (1.6 million) to December 2024 (~2.1 million). Meanwhile, the prescription for the other three drugs remained stable at around 1-1.3 million over the same period.
+<br><br>
+```{r line2, echo=FALSE, message=FALSE}
+data %>% 
+  filter(DRUG == "Sertraline hydrochloride" |
+           DRUG == "Amitriptyline hydrochloride" |
+           DRUG == "Citalopram hydrobromide" |
+           DRUG == "Mirtazapine") %>% 
+  group_by(YM, DRUG) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  ungroup() %>% 
+hchart("line", hcaes(YM, ITEMS, group = DRUG)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Items Prescribed")) %>% 
+  hc_title(text = "Monthly Total Sertraline, Amitriptyline, Citalopram, and Mirtazapine Prescribed in England from January 2021 to December 2024")
+```
+
+#### Monthly trends of antidepressant prescribing costs in England (2021-2024)
+
+In terms of prescribing costs, from the chart below, we can see that the total antidepressant prescribing costs went down from £29.9 million in January 2021 to £18.8 million in December 2024. A longitudinal analysis of this monthly prescribing cost started with a cost spike in the beginning of 2021 before a continuous decrease until the mid of 2022. There were further cost spikes in July 2022 and July 2024 which could be due to seasonality in the number of antidepressant prescribed.
+<br><br>
+
+```{r line3, echo=FALSE, message=FALSE}
+data %>% 
+  group_by(YM) %>% 
+  summarise(COST = round(sum(COST), -3)) %>% 
+  ungroup() %>% 
+hchart("line", hcaes(YM, COST)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Total Cost (\u00A3)")) %>% 
+  hc_title(text = "Monthly Total Cost of Antidepressant Prescribed in England from January 2021 to December 2024")
+```
+
+When we look closely at the top five antidepressant by total prescribing cost from the chart below, we can see that the cost went down for all of these drugs except Venlafaxine which increased from £2.8 million in January 2021 to £4.1 million in December 2024. Interestingly, by December 2024, the cost of Venlafaxine prescription was almost the same as Sertraline, despite being prescribed way less.
+
+On the other hand, we can see that there was a significant drop in the cost of Sertraline from £12.5 million in January 2021 to a little less than £3 million in January 2022. This explains the significant decrease in the national total prescribing cost from 2021 to 2022 we saw earlier.
+
+Additionally, we can now see that the cost spike in July 2022 was driven by Citalopram hydrobromide, while the spike in July 2024 was driven by the increasing cost of Sertraline prescribing.
+<br><br>
+```{r line4, echo=FALSE, message=FALSE}
+data %>% 
+  filter(DRUG == "Sertraline hydrochloride" |
+           DRUG == "Venlafaxine" |
+           DRUG == "Amitriptyline hydrochloride" |
+           DRUG == "Fluoxetine hydrochloride" |
+           DRUG == "Citalopram hydrobromide") %>% 
+  group_by(YM, DRUG) %>% 
+  summarise(COST = round(sum(COST), -3)) %>% 
+  ungroup() %>% 
+hchart("line", hcaes(YM, COST, group = DRUG)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Total Cost (\u00A3)")) %>% 
+  hc_title(text = "Monthly Total Cost of Sertraline, Venlafaxine, Amitriptyline, and Fluoxetine Prescription in England from January 2021 to December 2024")
+```
+
+### Case study on individual drugs on antidepressant prescribing cost trends
+
+This case study will focus on the top three antidepressants by total prescribing costs in 2021-2024, which are Sertraline hydochloride, Venlafaxine, and Amitriptyline hydrochloride. The aim of this analysis is to better understand how these antidepressants impact the prescribing costs and trends in England.
+<br><br>
+
+#### Percentage of Sertraline, Venlafaxine, and Amitriptyline prescribing costs from the total antidepressant prescribing cost
+
+Together, Sertraline, Venlafaxine, and Amitriptyline accounted for up to 60% of the total antidepressant prescribing costs in England from 2021-2024. From the beginning of 2021 to mid 2022, this proportion decreased from 60% to 35%, then steadily increased and stabilised at 52% by the end of 2024.
+<br><br>
+```{r line5, echo=FALSE, message=FALSE}
+data %>% 
+  mutate(
+    TOP_COST = case_when(
+      DRUG %in% c("Sertraline hydrochloride", "Venlafaxine", "Amitriptyline hydrochloride") ~ COST,
+      TRUE ~ 0
+    )
+  ) %>% 
+  group_by(YM) %>% 
+  summarise(
+    TOP_COST = sum(TOP_COST),
+    COST = sum(COST)
+  ) %>% 
+  ungroup() %>% 
+  mutate(PCT = round(100* (TOP_COST/COST), 2)) %>% 
+  hchart("line", hcaes(YM, PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Cost (%)")) %>% 
+  hc_title(text = "Percentage of Sertraline, Venlafaxine, and Amitriptyline Prescription Costs from the Total Prescribing Cost per Month")
+```
+
+When we look closely, the fluctuation in this proportion was largely driven by changes in Sertraline prescribing cost, which accounted for almost 42% of the total prescribing cost in January 2021 to only 22% by December 2024. 
+<br><br>
+```{r line6, echo=FALSE, message=FALSE}
+data %>%
+  mutate(Sertraline = if_else(DRUG == "Sertraline hydrochloride", COST, 0)) %>% 
+  group_by(YM) %>%
+  summarise(Sertraline = sum(Sertraline),
+    Total_COST = sum(COST)) %>%
+  ungroup() %>% 
+  mutate(Sertraline_PCT = round((Sertraline/Total_COST)*100, 2)) %>% 
+  hchart("line", hcaes(YM, Sertraline_PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Cost (%)")) %>% 
+  hc_title(text = "Percentage of Sertraline Prescription Cost from Total Prescribing Cost per Month")
+```
+
+On the contrary, the percentage of monthly antidepressant prescribing costs from Venlafaxine appeared to be steadily increasing, starting from 9.62% in January 2021 to almost 22% of the total prescribing cost by December 2024.
+<br><br>
+```{r line7, echo=FALSE, message=FALSE}
+data %>%
+  mutate(Venlafaxine = if_else(DRUG == "Venlafaxine", COST, 0)) %>% 
+  group_by(YM) %>%
+  summarise(Venlafaxine = sum(Venlafaxine),
+    Total_COST = sum(COST)) %>%
+  ungroup() %>% 
+  mutate(Venlafaxine_PCT = round((Venlafaxine/Total_COST)*100, 2)) %>% 
+  hchart("line", hcaes(YM, Venlafaxine_PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Cost (%)")) %>% 
+  hc_title(text = "Proportion of Venlafaxine Prescription Cost from Total Prescribing Cost per Month")
+```
+
+Meanwhile, the percentage of monthly prescribing costs from Amitriptyline was fluctuating, with a significant decrease in July 2022 before stabilising to the beginning of 2021 percentage of 8.6-8.7% by the end of 2024.
+<br><br>
+```{r line8, echo=FALSE, message=FALSE}
+data %>%
+  mutate(Amitriptyline = if_else(DRUG == "Amitriptyline hydrochloride", COST, 0)) %>% 
+  group_by(YM) %>%
+  summarise(Amitriptyline = sum(Amitriptyline),
+    Total_COST = sum(COST)) %>%
+  ungroup() %>% 
+  mutate(Amitriptyline_PCT = round((Amitriptyline/Total_COST)*100, 2)) %>% 
+  hchart("line", hcaes(YM, Amitriptyline_PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Cost (%)")) %>% 
+  hc_title(text = "Proportion of Amitriptyline Prescription Cost from Total Prescribing Cost per Month")
+```
+
+#### Percentage of Sertraline, Venlafaxine, and Amitriptyline prescribing volumes from the total antidepressant prescribing volumes
+
+When we look at the percentage of Sertraline prescription from the total antidepressant prescribing volumes per month, there was a slight steady increase over the 2021-2024 period from 24.1% to 26.6%. However, this insight does not explain much about the decreasing cost percentage we have observed earlier, as increasing volume proportion should have also increased the cost proportion.
+<br><br>
+```{r line9, echo=FALSE, message=FALSE}
+data %>%
+  mutate(Sertraline = if_else(DRUG == "Sertraline hydrochloride", ITEMS, 0)) %>% 
+  group_by(YM) %>%
+  summarise(
+    Sertraline = sum(Sertraline),
+    Total_ITEMS = sum(ITEMS)
+  ) %>%
+  ungroup() %>% 
+  mutate(Sertraline_PCT = round((Sertraline/Total_ITEMS)*100, 2)) %>% 
+  hchart("line", hcaes(YM, Sertraline_PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Volume")) %>% 
+  hc_title(text = "Proportion of Sertraline Prescription from Total Prescribed Antidepressant per Month")
+```
+
+Interestingly, although the percentage of monthly antidepressant prescribing costs from Venlafaxine steadily increasing quite significantly, the proportion of its prescribing volume remained stable at 6.3% from 2021-2022, and slightly increased to 6.6% by the end of 2024.
+<br><br>
+```{r line10, echo=FALSE, message=FALSE}
+data %>%
+  mutate(Venlafaxine = if_else(DRUG == "Venlafaxine", ITEMS, 0)) %>% 
+  group_by(YM) %>%
+  summarise(
+    Venlafaxine = sum(Venlafaxine),
+    Total_ITEMS = sum(ITEMS)
+  ) %>%
+  ungroup() %>% 
+  mutate(Venlafaxine_PCT = round((Venlafaxine/Total_ITEMS)*100, 2)) %>% 
+  hchart("line", hcaes(YM, Venlafaxine_PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Volume")) %>% 
+  hc_title(text = "Proportion of Venlafaxine Prescription from Total Prescribed Antidepressant per Month")
+```
+
+On the other hand, the percentage of Amitriptyline prescribing volume slightly decreased from 18.2% to 17.6% over the four years period.
+<br><br>
+```{r line11, echo=FALSE, message=FALSE}
+data %>%
+  mutate(Amitriptyline = if_else(DRUG == "Amitriptyline hydrochloride", ITEMS, 0)) %>% 
+  group_by(YM) %>%
+  summarise(
+    Amitriptyline = sum(Amitriptyline),
+    Total_ITEMS = sum(ITEMS)
+  ) %>%
+  ungroup() %>% 
+  mutate(Amitriptyline_PCT = round((Amitriptyline/Total_ITEMS)*100, 2)) %>% 
+  hchart("line", hcaes(YM, Amitriptyline_PCT)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Percentage of Prescribing Volume")) %>% 
+  hc_title(text = "Proportion of Amitriptyline Prescription from Total Prescribed Antidepressant per Month")
+```
+
+
+#### Average cost per Item for Sertraline, Venlafaxine, and Amitriptyline per month
+
+Finally, looking at the average cost per item for each antidepressant per month gives us an explanation why we observed those fluctuating percentage of monthly prescribing costs.
+
+From the chart below, we can see that there was a significant drop in the average cost of Sertraline from nearly £8 per item in the beginning of 2021 to £2 per item by the end of 2024. Contrastingly, the average cost of Venlafaxine was increasing from £6.8 per item in January 2021 to around £8 per item by December 2024. Meanwhile, the average cost of Amitriptyline tend to be more stable and eventually decreased from £2 to £1 per item from January 2021 to December 2024.
+<br><br>
+```{r line12, echo=FALSE, message=FALSE}
+data %>% 
+  filter(DRUG == "Sertraline hydrochloride"|
+           DRUG == "Venlafaxine" |
+           DRUG == "Amitriptyline hydrochloride") %>% 
+  group_by(YM, DRUG) %>% 
+  summarise(ITEMS = sum(ITEMS),
+           COST = sum (COST)) %>% 
+  ungroup() %>% 
+  mutate(ITEM_COST = round((COST/ITEMS), 2)) %>% 
+  hchart("line", hcaes(YM, ITEM_COST, group = DRUG)) %>% 
+  hc_yAxis(min = 0) %>% 
+  hc_xAxis(title = list(text = "Year-Month")) %>% 
+  hc_yAxis(title = list(text = "Average Cost per Item")) %>% 
+  hc_title(text = "Monthly Average Cost per Item for Sertraline, Venlafaxine, and Amitriptyline
+            from January 2021 to December 2024")
+```
+
+#### Distribution of the Monthly Average Cost per Item for Sertraline, Venlafaxine, and Amitriptyline 
+
+When we ran some basic statistical analysis on the average cost per item per month for each of these antidepressants, we can see that: 
+
+-   Venlafaxine was a consistenly far more expensive drug compared to Sertraline and Amitriptyline, with the minimum cost of Venlafaxine equals to around 3.7x of Amitryptyline and 2.3x of Sertraline.
+-   The average cost per item for Sertraline ranged widely (>£6) from £1.43 to £7.80, which also shows how significantly the drug price has decreased over the years.
+-   The average cost per item for Amitriptyline remained stable with less than £1 fluctuation during the analysis period of 2021-2024.
+<br><br>
+```{r table3, echo=FALSE, message=FALSE}
+data %>% 
+  filter(DRUG == "Sertraline hydrochloride"|
+           DRUG == "Venlafaxine" |
+           DRUG == "Amitriptyline hydrochloride") %>% 
+  group_by(YM, DRUG) %>% 
+  summarise(ITEMS = sum(ITEMS),
+            COST = sum (COST)) %>% 
+  ungroup() %>% 
+  mutate(ITEM_COST = round((COST/ITEMS), 2)) %>% 
+  group_by(DRUG) %>% 
+  summarise(Min = min(ITEM_COST), 
+            `Lower Quartile` = round(quantile(ITEM_COST, 0.25), 2),
+            Median = median(ITEM_COST), 
+            `Upper Quartile` = round(quantile(ITEM_COST, 0.75), 2),
+            Max = max(ITEM_COST), 
+            Mean = round(mean(ITEM_COST), 2), 
+            Range = Max-Min)%>% 
+  rename(Drug = DRUG) %>% 
+  ungroup() %>% 
+  kable()
+```
+
+
+### Summary
+
+From this report, we have learned that: 
+
+-   The total number of antidepressants prescribed in England increased every year. In 2024, there was 11% more antidepressant being prescribed than in 2021.
+-   Despite the increasing number of prescribed antidepressant, the prescribing costs of these antidepressant were decreasing by more than 20% over the four years period from 2021 to 2024.
+-   The Midlands and North East & Yorkshire were two regions with the highest number of antidepressant prescribing volumes and costs.
+-   Sertraline was the biggest driver in fluctuating the volumes and costs of antidepressant prescribing in England. However, seasonal cost spike could also be caused by price changes in other drugs, such as Citalopram hydrobromide, as observed in July 2022.
+-   Venlafaxine was a notable example of discrepancies between prescribing volumes and costs, as the drug displayed small increase in prescribing volumes yet a large increase in prescribing costs.
+-   Hence, when analysing both the prescribing volumes and costs of antidepressant, the average cost per item was an important factor to consider.
