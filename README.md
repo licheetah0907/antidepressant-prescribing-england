@@ -15,6 +15,8 @@ A high-level summary of this report includes:
 - Sertraline and Venlafaxine were the two biggest drivers of changes in antidepressant prescribing volumes and costs in England.
 - The average cost per item is an important metric to consider when analysing both prescribing volumes and costs of antidepressants in England.
 
+To see the full Rmd report as HTML file: https://licheetah0907.github.io/antidepressant-prescribing-england/
+
 ## Resources
 The dataset used in this report was sourced from the NHS Business Services Authority, which has been specifically modified for the challenge. The modified dataset and other resources could be found on: https://github.com/nhsbsa-data-analytics/dig-data-step-up/blob/main/README.md
 
